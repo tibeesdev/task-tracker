@@ -50,12 +50,14 @@ type StoreValue = {
   messages: ChatMessage[]
   currentUserId: string
   role: Role
-  setRole: (r: Role) => void
   activeServerId: string
   activeRoomId: string
   setActiveServer: (id: string) => void
   setActiveRoom: (id: string) => void
   getMember: (id: string) => Member | undefined
+  // auth
+  login: (userId: string) => void
+  logout: () => void
   // servers & rooms
   addServer: (name: string) => void
   addRoom: (serverId: string, name: string, type: RoomType) => void
@@ -91,7 +93,13 @@ type StoreValue = {
 
 const StoreContext = createContext<StoreValue | null>(null)
 
-export function StoreProvider({ children }: { children: ReactNode }) {
+export function StoreProvider({
+  children,
+  initialUserId = CURRENT_USER_ID,
+}: {
+  children: ReactNode
+  initialUserId?: string
+}) {
   const [members] = useState<Member[]>(seedMembers)
   const [servers, setServers] = usePersistedState<Server[]>('tt:servers', seedServers)
   const [rooms, setRooms] = usePersistedState<Room[]>('tt:rooms', seedRooms)
@@ -99,10 +107,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [alarms, setAlarms] = usePersistedState<Alarm[]>('tt:alarms', seedAlarms)
   const [voice, setVoice] = useState<Record<string, VoiceParticipant[]>>(initialVoice)
   const [messages, setMessages] = usePersistedState<ChatMessage[]>('tt:messages', seedMessages)
-  const [role, setRole] = useState<Role>('admin')
+  const [currentUserId, setCurrentUserId] = useState<string>(initialUserId)
   const [activeServerId, setActiveServerId] = useState<string>(seedServers[0].id)
   const [activeRoomId, setActiveRoomId] = useState<string>('r-produk-tugas')
   const [activeAlarmModal, setActiveAlarmModal] = useState<Alarm | null>(null)
+
+  // Derive role from server ownership — no manual toggle needed
+  const activeServer = servers.find((s) => s.id === activeServerId) ?? servers[0]
+  const role: Role = activeServer?.ownerId === currentUserId ? 'admin' : 'member'
 
   const setActiveServer = (id: string) => {
     setActiveServerId(id)
@@ -111,6 +123,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }
 
   const getMember = (id: string) => members.find((m) => m.id === id)
+
+  // --- Auth ---
+  const login = (userId: string) => {
+    setCurrentUserId(userId)
+    setActiveServerId(seedServers[0].id)
+    setActiveRoomId('r-produk-tugas')
+  }
+
+  const logout = () => {
+    setCurrentUserId(CURRENT_USER_ID)
+  }
 
   // --- Servers & Rooms ---
   const addServer = (name: string) => {
@@ -133,8 +156,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         name: trimmed,
         short,
         color,
-        ownerId: CURRENT_USER_ID,
-        memberIds: [CURRENT_USER_ID, 'u-nadia', 'u-bagas', 'u-sari', 'u-dimas', 'u-rina', 'u-fajar'],
+        ownerId: currentUserId,
+        memberIds: [currentUserId, 'u-nadia', 'u-bagas', 'u-sari', 'u-dimas', 'u-rina', 'u-fajar'],
       },
     ])
     // buat default rooms
@@ -147,7 +170,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setRooms((prev) => [...prev, ...defaultRooms])
     setActiveServerId(id)
     setActiveRoomId(defaultRooms[1].id)
-    setRole('admin') // Pembuat pertama adalah Admin
   }
 
   const addRoom = (serverId: string, name: string, type: RoomType) => {
@@ -212,7 +234,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                       proof: {
                         ...proof,
                         uploadedAt: nowTime(),
-                        uploadedBy: CURRENT_USER_ID,
+                        uploadedBy: currentUserId,
                       },
                     }
                   : td,
@@ -281,7 +303,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const dismissActiveAlarm = () => {
     if (activeAlarmModal) {
-      setAlarmResponse(activeAlarmModal.id, CURRENT_USER_ID, 'dimatikan')
+      setAlarmResponse(activeAlarmModal.id, currentUserId, 'dimatikan')
       setActiveAlarmModal(null)
       toast.success('Kamu berhasil mematikan alarm.')
     }
@@ -291,7 +313,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const alarm = alarms.find((a) => a.id === alarmId)
     if (!alarm) return
     const activeOthers = alarm.responses.filter(
-      (r) => r.memberId !== CURRENT_USER_ID && r.status === 'aktif',
+      (r) => r.memberId !== currentUserId && r.status === 'aktif',
     )
     if (activeOthers.length === 0) {
       // Reset status anggota lain agar bisa diuji coba berulang
@@ -301,7 +323,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             ? {
                 ...a,
                 responses: a.responses.map((r) =>
-                  r.memberId !== CURRENT_USER_ID
+                  r.memberId !== currentUserId
                     ? { ...r, status: 'aktif' as const, updatedAt: undefined }
                     : r,
                 ),
@@ -321,15 +343,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const joinVoice = (roomId: string) => {
     setVoice((prev) => {
       const list = prev[roomId] ?? []
-      if (list.some((p) => p.memberId === CURRENT_USER_ID)) return prev
-      return { ...prev, [roomId]: [...list, { memberId: CURRENT_USER_ID, muted: false, speaking: false }] }
+      if (list.some((p) => p.memberId === currentUserId)) return prev
+      return { ...prev, [roomId]: [...list, { memberId: currentUserId, muted: false, speaking: false }] }
     })
   }
 
   const leaveVoice = (roomId: string) => {
     setVoice((prev) => ({
       ...prev,
-      [roomId]: (prev[roomId] ?? []).filter((p) => p.memberId !== CURRENT_USER_ID),
+      [roomId]: (prev[roomId] ?? []).filter((p) => p.memberId !== currentUserId),
     }))
   }
 
@@ -337,7 +359,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setVoice((prev) => ({
       ...prev,
       [roomId]: (prev[roomId] ?? []).map((p) =>
-        p.memberId === CURRENT_USER_ID ? { ...p, muted: !p.muted } : p,
+        p.memberId === currentUserId ? { ...p, muted: !p.muted } : p,
       ),
     }))
   }
@@ -357,7 +379,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!trimmed) return
     setMessages((prev) => [
       ...prev,
-      { id: uid(), roomId, senderId: CURRENT_USER_ID, text: trimmed, createdAt: nowTime() },
+      { id: uid(), roomId, senderId: currentUserId, text: trimmed, createdAt: nowTime() },
     ])
   }
 
@@ -371,7 +393,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       alarms.forEach((alarm) => {
         const key = `${alarm.id}-${currentDate}-${alarm.time}`
         if (firedRef.current.has(key)) return
-        const myResponse = alarm.responses.find((r) => r.memberId === CURRENT_USER_ID)
+        const myResponse = alarm.responses.find((r) => r.memberId === currentUserId)
         if (!myResponse || myResponse.status !== 'aktif') return
         if (alarm.time === currentTime && alarm.date <= currentDate) {
           firedRef.current.add(key)
@@ -393,14 +415,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       alarms,
       voice,
       messages,
-      currentUserId: CURRENT_USER_ID,
+      currentUserId,
       role,
-      setRole,
       activeServerId,
       activeRoomId,
       setActiveServer,
       setActiveRoom: setActiveRoomId,
       getMember,
+      login,
+      logout,
       addServer,
       addRoom,
       addTask,
@@ -422,7 +445,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       sendMessage,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [members, servers, rooms, tasks, alarms, voice, messages, role, activeServerId, activeRoomId, activeAlarmModal],
+    [members, servers, rooms, tasks, alarms, voice, messages, currentUserId, role, activeServerId, activeRoomId, activeAlarmModal],
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

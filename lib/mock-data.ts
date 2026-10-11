@@ -3,7 +3,7 @@ import type { Member, Server, Room, Task, Alarm, VoiceParticipant, ChatMessage }
 export const CURRENT_USER_ID = 'u-you'
 
 export const members: Member[] = [
-  { id: 'u-you', name: 'Kamu', initials: 'KA', color: 'oklch(0.56 0.2 285)', online: true },
+  { id: 'u-you', name: 'Andi Wijaya', initials: 'AW', color: 'oklch(0.56 0.2 285)', online: true },
   { id: 'u-nadia', name: 'Nadia Putri', initials: 'NP', color: 'oklch(0.65 0.18 20)', online: true },
   { id: 'u-bagas', name: 'Bagas Pratama', initials: 'BP', color: 'oklch(0.63 0.16 155)', online: true },
   { id: 'u-sari', name: 'Sari Wulandari', initials: 'SW', color: 'oklch(0.7 0.15 60)', online: false },

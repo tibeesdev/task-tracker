@@ -6,19 +6,14 @@ import {
   AlarmClock,
   Volume2,
   MessageSquare,
-  Building2,
   ChevronDown,
   Plus,
   Crown,
-  UserCheck,
-  CheckCircle2,
-  AlertCircle,
   Briefcase,
-  Layers,
+  LogOut,
 } from 'lucide-react'
 import { useStore, taskProgress } from '@/lib/store'
 import { MemberAvatar } from '@/components/member-avatar'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -32,7 +27,11 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import type { RoomType } from '@/lib/types'
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  onLogout: () => void
+}
+
+export function AppSidebar({ onLogout }: AppSidebarProps) {
   const {
     servers,
     rooms,
@@ -41,7 +40,6 @@ export function AppSidebar() {
     setActiveServer,
     setActiveRoom,
     role,
-    setRole,
     currentUserId,
     getMember,
     tasks,
@@ -67,7 +65,6 @@ export function AppSidebar() {
   const tugasRoom = serverRooms.find((r) => r.type === 'tugas')
   const jadwalRoom = serverRooms.find((r) => r.type === 'jadwal')
   const suaraRoom = serverRooms.find((r) => r.type === 'suara')
-  const chatRoom = serverRooms.find((r) => r.type === 'chat')
 
   const serverTasks = tasks.filter((t) => t.roomId === tugasRoom?.id)
   const pendingReviewCount = serverTasks.reduce(
@@ -91,6 +88,11 @@ export function AppSidebar() {
     setNewOrgName('')
     setCreateOrgOpen(false)
     toast.success(`Organisasi "${newOrgName.trim()}" berhasil dibuat! Kamu adalah Admin.`)
+  }
+
+  const handleLogout = () => {
+    toast.info('Berhasil keluar dari akun.')
+    onLogout()
   }
 
   return (
@@ -162,17 +164,19 @@ export function AppSidebar() {
                 ))}
               </div>
               <div className="border-t mt-1.5 pt-1.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOrgDropdownOpen(false)
-                    setCreateOrgOpen(true)
-                  }}
-                  className="flex w-full items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
-                >
-                  <Plus className="size-3.5" />
-                  Tambah Organisasi Baru
-                </button>
+                {role === 'admin' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOrgDropdownOpen(false)
+                      setCreateOrgOpen(true)
+                    }}
+                    className="flex w-full items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    <Plus className="size-3.5" />
+                    Tambah Organisasi Baru
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -320,55 +324,36 @@ export function AppSidebar() {
           </div>
         </div>
 
-        {/* FOOTER: ROLE CONTROLLER & USER PROFILE */}
-        <div className="border-t bg-card/60 p-3 flex flex-col gap-2.5">
-          {/* Formal Role Switcher */}
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase px-1">
-              Sudut Pandang Peran:
-            </span>
-            <div className="grid grid-cols-2 gap-1 rounded-lg border bg-muted/50 p-1">
-              <button
-                type="button"
-                onClick={() => setRole('admin')}
-                className={cn(
-                  'flex items-center justify-center gap-1.5 rounded-md py-1 text-xs font-bold transition-all',
-                  role === 'admin'
-                    ? 'bg-card text-foreground shadow-xs'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                <Crown className="size-3 text-amber-500" />
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole('member')}
-                className={cn(
-                  'flex items-center justify-center gap-1.5 rounded-md py-1 text-xs font-bold transition-all',
-                  role === 'member'
-                    ? 'bg-card text-foreground shadow-xs'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                <UserCheck className="size-3 text-primary" />
-                Anggota
-              </button>
-            </div>
-          </div>
-
-          {/* User profile card */}
+        {/* FOOTER: USER PROFILE & LOGOUT */}
+        <div className="border-t bg-card/60 p-3">
           {currentUser && (
-            <div className="flex items-center gap-2 rounded-lg border bg-card p-2 shadow-2xs">
-              <MemberAvatar member={currentUser} className="size-7" showStatus />
-              <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-2 rounded-xl border bg-card p-2.5 shadow-2xs">
+              <MemberAvatar member={currentUser} className="size-8" showStatus />
+              <div className="flex flex-col min-w-0 flex-1">
                 <span className="truncate text-xs font-bold text-foreground">
                   {currentUser.name}
                 </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {role === 'admin' ? 'Akses: Pembuat & Reviewer' : 'Akses: Pelaksana Tugas'}
+                <span className={cn(
+                  'text-[10px] font-semibold flex items-center gap-1',
+                  role === 'admin'
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-primary',
+                )}>
+                  {role === 'admin' ? (
+                    <><Crown className="size-2.5" /> Administrator</>
+                  ) : (
+                    'Anggota Tim'
+                  )}
                 </span>
               </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                title="Keluar dari akun"
+                className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+              >
+                <LogOut className="size-3.5" />
+              </button>
             </div>
           )}
         </div>

@@ -7,15 +7,10 @@ import {
   MessageSquare,
   type LucideIcon,
   Crown,
-  User,
-  Building2,
-  ChevronRight,
   ShieldCheck,
+  ChevronRight,
 } from 'lucide-react'
 import { useStore } from '@/lib/store'
-import { MemberAvatar } from '@/components/member-avatar'
-import { FeasibilityGuideDialog } from '@/components/feasibility-guide-dialog'
-import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { RoomType } from '@/lib/types'
 
@@ -43,7 +38,7 @@ const titles: Record<RoomType, { label: string; desc: string; icon: LucideIcon }
 }
 
 export function TopBar() {
-  const { rooms, activeRoomId, servers, activeServerId, role, currentUserId } = useStore()
+  const { rooms, activeRoomId, servers, activeServerId, role } = useStore()
   const currentServer = servers.find((s) => s.id === activeServerId)
   const room = rooms.find((r) => r.id === activeRoomId)
 
@@ -70,14 +65,18 @@ export function TopBar() {
         </div>
       </div>
 
-      {/* Right Controls */}
+      {/* Right Controls: Role Badge */}
       <div className="flex shrink-0 items-center gap-3">
-        {/* Active Role Indicator Badge */}
-        <div className="hidden sm:flex items-center gap-1.5 rounded-full border bg-muted/40 px-2.5 py-1 text-xs">
+        <div className={cn(
+          'hidden sm:flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs',
+          role === 'admin'
+            ? 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-700/40'
+            : 'bg-primary/5 border-primary/20',
+        )}>
           {role === 'admin' ? (
             <>
               <Crown className="size-3.5 text-amber-500" />
-              <span className="font-bold text-foreground">Otoritas: Admin</span>
+              <span className="font-bold text-amber-700 dark:text-amber-300">Otoritas: Admin</span>
             </>
           ) : (
             <>
@@ -86,9 +85,6 @@ export function TopBar() {
             </>
           )}
         </div>
-
-        {/* Feasibility Guide Modal trigger */}
-        <FeasibilityGuideDialog />
       </div>
     </header>
   )
