@@ -1,67 +1,94 @@
 'use client'
 
-import { ListTodo, AlarmClock, Volume2, Hash, type LucideIcon } from 'lucide-react'
+import {
+  ListTodo,
+  AlarmClock,
+  Volume2,
+  MessageSquare,
+  type LucideIcon,
+  Crown,
+  User,
+  Building2,
+  ChevronRight,
+  ShieldCheck,
+} from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { MemberAvatar } from '@/components/member-avatar'
+import { FeasibilityGuideDialog } from '@/components/feasibility-guide-dialog'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { RoomType } from '@/lib/types'
 
-const icons: Record<RoomType, LucideIcon> = {
-  tugas: ListTodo,
-  jadwal: AlarmClock,
-  suara: Volume2,
-  chat: Hash,
-}
-
-const hints: Record<RoomType, string> = {
-  tugas: 'Kelola tugas & to-do list tim di sini',
-  jadwal: 'Alarm & jadwal yang dibagikan ke semua anggota',
-  suara: 'Ruang diskusi suara bersama',
+const titles: Record<RoomType, { label: string; desc: string; icon: LucideIcon }> = {
+  tugas: {
+    label: 'Papan Jobdesk & Akuntabilitas Tugas',
+    desc: 'Sistem pembagian tugas, unggah bukti pengerjaan, dan verifikasi ACC / Revisi Admin.',
+    icon: ListTodo,
+  },
+  jadwal: {
+    label: 'Jadwal & Sistem Alarm Pengingat Bersama',
+    desc: 'Alarm dan jadwal serentak untuk seluruh anggota dengan pelacak respons pemadaman.',
+    icon: AlarmClock,
+  },
+  suara: {
+    label: 'Ruang Rapat Suara Tim',
+    desc: 'Koordinasi audio langsung untuk sinkronisasi keputusan dan diskusi formal.',
+    icon: Volume2,
+  },
+  chat: {
+    label: 'Papan Komunikasi & Pengumuman',
+    desc: 'Saluran informasi dan koordinasi tertulis antar anggota organisasi.',
+    icon: MessageSquare,
+  },
 }
 
 export function TopBar() {
-  const { rooms, activeRoomId, role, setRole, getMember, currentUserId } = useStore()
+  const { rooms, activeRoomId, servers, activeServerId, role, currentUserId } = useStore()
+  const currentServer = servers.find((s) => s.id === activeServerId)
   const room = rooms.find((r) => r.id === activeRoomId)
-  const me = getMember(currentUserId)
-  if (!room) return null
-  const Icon = icons[room.type]
+
+  const meta = titles[room?.type ?? 'tugas']
+  const Icon = meta.icon
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-card px-4">
-      <Icon className="size-5 text-muted-foreground" />
-      <div className="flex min-w-0 flex-col">
-        <h1 className="truncate text-sm font-semibold leading-tight">{room.name}</h1>
-        <p className="truncate text-xs text-muted-foreground">{hints[room.type]}</p>
+    <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b bg-card px-5 shadow-2xs">
+      {/* Breadcrumb & Section Name */}
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Icon className="size-4.5" />
+        </span>
+
+        <div className="flex min-w-0 flex-col">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+            <span className="truncate">{currentServer?.name || 'Organisasi'}</span>
+            <ChevronRight className="size-3 shrink-0" />
+            <span className="font-bold text-foreground truncate">{meta.label}</span>
+          </div>
+          <span className="hidden md:block truncate text-[11px] text-muted-foreground">
+            {meta.desc}
+          </span>
+        </div>
       </div>
 
-      <div className="ml-auto flex items-center gap-3">
-        <div
-          className="flex items-center rounded-full bg-muted p-1"
-          role="group"
-          aria-label="Lihat aplikasi sebagai"
-        >
-          {(['admin', 'member'] as const).map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setRole(r)}
-              className={cn(
-                'rounded-full px-3 py-1 text-xs font-semibold transition-colors',
-                role === r
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {r === 'admin' ? 'Admin' : 'Anggota'}
-            </button>
-          ))}
+      {/* Right Controls */}
+      <div className="flex shrink-0 items-center gap-3">
+        {/* Active Role Indicator Badge */}
+        <div className="hidden sm:flex items-center gap-1.5 rounded-full border bg-muted/40 px-2.5 py-1 text-xs">
+          {role === 'admin' ? (
+            <>
+              <Crown className="size-3.5 text-amber-500" />
+              <span className="font-bold text-foreground">Otoritas: Admin</span>
+            </>
+          ) : (
+            <>
+              <ShieldCheck className="size-3.5 text-primary" />
+              <span className="font-bold text-foreground">Otoritas: Anggota</span>
+            </>
+          )}
         </div>
-        {me && (
-          <div className="flex items-center gap-2 rounded-full border bg-card py-1 pl-1 pr-3">
-            <MemberAvatar member={me} className="size-7" showStatus />
-            <span className="text-xs font-medium">{me.name}</span>
-          </div>
-        )}
+
+        {/* Feasibility Guide Modal trigger */}
+        <FeasibilityGuideDialog />
       </div>
     </header>
   )

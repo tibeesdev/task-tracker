@@ -22,6 +22,7 @@ export type Server = {
   name: string
   short: string
   color: string
+  ownerId: string
   memberIds: string[]
 }
 

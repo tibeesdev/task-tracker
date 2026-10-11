@@ -18,6 +18,7 @@ export const servers: Server[] = [
     name: 'Tim Produk',
     short: 'TP',
     color: 'oklch(0.56 0.2 285)',
+    ownerId: 'u-you',
     memberIds: ['u-you', 'u-nadia', 'u-bagas', 'u-sari', 'u-dimas', 'u-rina', 'u-fajar'],
   },
   {
@@ -25,6 +26,7 @@ export const servers: Server[] = [
     name: 'Panitia Wisuda',
     short: 'PW',
     color: 'oklch(0.65 0.18 20)',
+    ownerId: 'u-you',
     memberIds: ['u-you', 'u-nadia', 'u-dimas', 'u-fajar'],
   },
   {
@@ -32,6 +34,7 @@ export const servers: Server[] = [
     name: 'Kelas Desain',
     short: 'KD',
     color: 'oklch(0.63 0.16 155)',
+    ownerId: 'u-you',
     memberIds: ['u-you', 'u-bagas', 'u-sari', 'u-rina'],
   },
 ]

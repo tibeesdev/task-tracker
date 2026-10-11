@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Briefcase } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -28,11 +28,11 @@ export function CreateTaskDialog({ roomId }: { roomId: string }) {
 
   const submit = () => {
     if (!title.trim()) {
-      toast.error('Judul tugas belum diisi.')
+      toast.error('Judul jobdesk belum diisi.')
       return
     }
     addTask(roomId, title.trim(), description.trim(), dueDate || 'Tanpa tenggat')
-    toast.success('Tugas baru dibuat.')
+    toast.success('Jobdesk baru berhasil dibuat.')
     setTitle('')
     setDescription('')
     setDueDate('')
@@ -41,49 +41,61 @@ export function CreateTaskDialog({ roomId }: { roomId: string }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="sm" />}>
-        <Plus data-icon="inline-start" />
-        Buat Tugas
+      <DialogTrigger render={<Button size="sm" className="bg-primary text-primary-foreground font-bold shadow-xs gap-1.5" />}>
+        <Plus className="size-4" />
+        Buat Jobdesk Baru
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Buat Tugas Baru</DialogTitle>
-          <DialogDescription>
-            Setelah tugas dibuat, tambahkan daftar to-do dan tugaskan ke anggota.
+          <div className="flex items-center gap-2">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Briefcase className="size-4" />
+            </span>
+            <DialogTitle className="text-base font-bold">Buat Jobdesk Organisasi</DialogTitle>
+          </div>
+          <DialogDescription className="text-xs text-muted-foreground pt-1">
+            Sebagai Administrator, buat penugasan kerja ini. Setelah dibuat, kamu dapat membagi rincian
+            to-do list dan menugaskan anggota penanggung jawab.
           </DialogDescription>
         </DialogHeader>
-        <FieldGroup>
+        <FieldGroup className="pt-2">
           <Field>
-            <FieldLabel htmlFor="task-title">Judul tugas</FieldLabel>
+            <FieldLabel htmlFor="task-title" className="text-xs font-bold">Nama Jobdesk / Proyek</FieldLabel>
             <Input
               id="task-title"
-              placeholder="Contoh: Redesain halaman beranda"
+              placeholder="Contoh: Penyusunan Laporan Pertanggungjawaban (LPJ)"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              className="text-xs"
+              autoFocus
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="task-desc">Deskripsi</FieldLabel>
+            <FieldLabel htmlFor="task-desc" className="text-xs font-bold">Deskripsi & Ruang Lingkup</FieldLabel>
             <Textarea
               id="task-desc"
-              placeholder="Jelaskan tujuan tugas ini secara singkat"
+              placeholder="Jelaskan instruksi kerja, standar luaran, atau ketentuan penting..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              className="text-xs"
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="task-due">Tenggat waktu</FieldLabel>
+            <FieldLabel htmlFor="task-due" className="text-xs font-bold">Batas Waktu Penyelesaian (Deadline)</FieldLabel>
             <Input
               id="task-due"
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
+              className="text-xs"
             />
           </Field>
         </FieldGroup>
-        <DialogFooter>
-          <DialogClose render={<Button variant="outline" />}>Batal</DialogClose>
-          <Button onClick={submit}>Buat Tugas</Button>
+        <DialogFooter className="pt-2">
+          <DialogClose render={<Button variant="outline" size="sm" />}>Batal</DialogClose>
+          <Button size="sm" onClick={submit} className="bg-primary text-primary-foreground font-bold">
+            Simpan & Buat Jobdesk
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
